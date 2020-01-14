@@ -1,12 +1,13 @@
 import React from 'react'
 import { useEffect } from 'react'
-import { useSelector, useDispatch, connect } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 
 import Picker from '../components/picker'
 import Posts from '../components/posts'
 import {
     changeChannel,
-    fetchPosts
+    invalidateChannel,
+    fetchPostsIfNeeded,
 } from '../actions'
 
 
@@ -19,15 +20,27 @@ const App = () => {
     ]
 
     const dispatch = useDispatch()
-
     const channel = useSelector(state => state.channel)
+    const postsByChannel = useSelector(state => state.postsByChannel)
+    const {
+        isFetching,
+        items: posts,
+        date
+    } = postsByChannel[channel] || {
+        isFetching: true,
+        items: []
+    }
+
     let handlerChange = (value) => {
         dispatch(changeChannel(value))
     }
+    let handlerRefresh = () => {
+        dispatch(invalidateChannel(channel))
+        dispatch(fetchPostsIfNeeded(channel))
+    }
 
-    const posts = useSelector(state => state.posts.items)
     useEffect(() => {
-        dispatch(fetchPosts(channel))
+        dispatch(fetchPostsIfNeeded(channel))
     }, [channel])
 
 
@@ -36,7 +49,26 @@ const App = () => {
     return (
         <div>
             <Picker value={channel} onChange={handlerChange} options={options} />
-            <Posts posts={posts}></Posts>
+
+            {
+                date &&
+                <span>
+                      Last updated at {new Date(date).toLocaleTimeString()}
+                </span>
+            }
+            {
+                !isFetching &&
+                <button onClick={handlerRefresh}>refresh</button>
+            }
+            {
+                isFetching
+                ?   <h2>Loading...</h2>
+                :   <div style={{ opacity: isFetching ? 0.5 : 1 }}>
+                        <Posts posts={posts}></Posts>
+                    </div>
+
+            }
+
         </div>
     )
 }

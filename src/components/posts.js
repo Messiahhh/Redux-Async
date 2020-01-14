@@ -2,9 +2,8 @@ import React from 'react'
 
 const Posts = ({posts}) => {
     return (
-        <ul>
-            {posts.map((post, index) => {
-                console.log(post);
+        <ul >
+            {posts && posts.map((post, index) => {
                 return <li key={index}>{post.title}</li>
             })}
         </ul>
